@@ -16,7 +16,6 @@ import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 
 @WebServlet("/CheckoutController")
 public class CheckoutController extends HttpServlet {
@@ -76,22 +75,15 @@ public class CheckoutController extends HttpServlet {
 		}
 
 		// int pinCode = Integer.parseInt(request.getParameter("pinCode"));
-		String productsJson = request.getParameter("products");
-		Gson gson1 = new Gson();
-		Map<Integer, Double> products = gson1.fromJson(productsJson, new TypeToken<Map<Integer, Double>>() {
-		}.getType());
+		Map<Integer, Double> products = (Map<Integer, Double>) request.getAttribute("products");
 		ShippingChargesCalculator calculator = new ShippingChargesCalculator();
 
 		try {
-			if (products == null || products.isEmpty()) {
-				throw new IllegalArgumentException("Products data is null or empty.");
-			}
 			// Calculate shipping charges including GST
 			Map<Integer, Double> shippingCharges = calculator.calculateShippingCharges(orderTotal, products);
 
 			// Set the shipping charges attribute in request scope
 			request.setAttribute("shippingCharges", shippingCharges);
-			request.setAttribute("products", products);
 
 			// Redirect to checkout.jsp
 			request.getRequestDispatcher("checkout.jsp").forward(request, response);
