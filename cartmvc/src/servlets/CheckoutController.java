@@ -2,7 +2,6 @@ package servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +16,7 @@ import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 @WebServlet("/CheckoutController")
 public class CheckoutController extends HttpServlet {
@@ -76,18 +76,22 @@ public class CheckoutController extends HttpServlet {
 		}
 
 		// int pinCode = Integer.parseInt(request.getParameter("pinCode"));
-		Map<Integer, Double> products = (Map<Integer, Double>) request.getAttribute("products");
-		Connection connection = (Connection) getServletContext().getAttribute("dbConnection");
+		String productsJson = request.getParameter("products");
+		Gson gson1 = new Gson();
+		Map<Integer, Double> products = gson1.fromJson(productsJson, new TypeToken<Map<Integer, Double>>() {
+		}.getType());
 		ShippingChargesCalculator calculator = new ShippingChargesCalculator();
 
 		try {
+			if (products == null || products.isEmpty()) {
+				throw new IllegalArgumentException("Products data is null or empty.");
+			}
 			// Calculate shipping charges including GST
 			Map<Integer, Double> shippingCharges = calculator.calculateShippingCharges(orderTotal, products);
 
 			// Set the shipping charges attribute in request scope
 			request.setAttribute("shippingCharges", shippingCharges);
-
-			// Continue with the rest of your checkout process...
+			request.setAttribute("products", products);
 
 			// Redirect to checkout.jsp
 			request.getRequestDispatcher("checkout.jsp").forward(request, response);
